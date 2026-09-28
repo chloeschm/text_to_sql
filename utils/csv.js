@@ -1,7 +1,18 @@
 const fs = require('fs');
 const csv = require('csv-parser');
+const { Readable } = require('stream');
 const Database = require('better-sqlite3');
 const db = new Database('data/database.db', { verbose: console.log });
+
+function getReadableStream(input) {
+    if (typeof input === 'string') {
+        return fs.createReadStream(input);
+    } else if (Buffer.isBuffer(input)) {
+        return Readable.from(input);
+    } else {
+        throw new Error('Input must be a file path (string) or Buffer');
+    }
+}
 
 function processHeaders(rawHeaders) {
     const seenKeys = new Set();
@@ -41,11 +52,11 @@ function processHeaders(rawHeaders) {
     });
 }
 
-function parseCSVHeaders(filePath) {
+function parseCSVHeaders(input) {
     return new Promise((resolve, reject) => {
         let headersParsed = false;
 
-        fs.createReadStream(filePath)
+        getReadableStream(input)
             .pipe(csv())
             .on('headers', (headers) => {
                 if (!headersParsed) {
@@ -60,13 +71,13 @@ function parseCSVHeaders(filePath) {
     });
 }
 
-function insertCSVData(filePath, tableName) {
+function insertCSVData(input, tableName) {
     return new Promise((resolve, reject) => {
         let insertStmt = null;
         let sanitizedHeaders = null;
         let rawHeaders = null;
 
-        fs.createReadStream(filePath)
+        getReadableStream(input)
             .pipe(csv())
             .on('headers', (headers) => {
                 rawHeaders = headers;
