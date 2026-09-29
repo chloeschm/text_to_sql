@@ -1,87 +1,49 @@
-<form action="/api/upload" method="post" enctype="multipart/form-data">
-    <input type="file" name="csvFile" accept=".csv">
-    <input type="text" name="tableName" placeholder="Enter table name">
-    <button type="submit">Upload</button>
-</form>
+<!DOCTYPE html>
+<html>
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Query Tool</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/app.js" defer></script>
+</head>
 
-<select name="tableName" id="table-select">
-    <option value="">Select a table</option>
-</select>
+<body>
+    <div id="upload-section">
+        <h1>Upload a CSV File to Query it!</h1>
+        <form action="/api/upload" method="post" enctype="multipart/form-data" id="upload-form">
+            <input type="file" name="csvFile" accept=".csv">
+            <input type="text" name="tableName" placeholder="Name your table">
+            <button type="submit">Upload</button>
+        </form>
+    </div>
 
-<script>
-    fetch('/api/tables')
-        .then(response => response.json())
-        .then(data => {
-            const select = document.getElementById('table-select');
-            data.tables.forEach(table => {
-                const option = document.createElement('option');
-                option.value = table;
-                option.textContent = table;
-                select.appendChild(option);
-            });
-        });
-</script>
+    <div id="query-section">
+        <h2>Query Your Data</h2>
+        <select name="tableName" id="table-select">
+            <option value="">Select a table</option>
+        </select>
 
+        <form action="/api/query" method="post" id="query-form">
+            <input type="text" name="question" placeholder="Type your question here">
+            <button type="submit">Submit to ask</button>
+        </form>
 
-<form action="/api/query" method="post" id="query-form">
-    <input type="text" name="question" placeholder="Enter your question">
-    <button type="submit">Ask</button>
-</form>
+        <div id="result-section">
+            <h3>Results</h3>
+            <p id="results-text">
+            <table>
+                <thead>
+                    <tr id="results-header">
+                    </tr>
+                </thead>
+                <tbody id="results-body">
+                </tbody>
+            </table>
+            </p>
+        </div>
+    </div>
+</body>
 
-<script>
-    document.getElementById('query-form').addEventListener('submit', async function (event) {
-        event.preventDefault();
-        const tableName = document.getElementById('table-select').value;
-        const question = document.querySelector('input[name="question"]').value;
-        const response = await fetch('/api/query', {
-            method: 'POST',
-            body: JSON.stringify({ tableName, question }),
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-        const data = await response.json();
-        const resultsText = document.getElementById('results-text');
-        const resultsHeader = document.getElementById('results-header');
-        const resultsBody = document.getElementById('results-body');
-        resultsHeader.innerHTML = '';
-        resultsBody.innerHTML = '';
-        if (data.success) {
-            if (data.results.length > 0) {
-                const firstRow = data.results[0];
-                Object.keys(firstRow).forEach(key => {
-                    const th = document.createElement('th');
-                    th.textContent = key;
-                    resultsHeader.appendChild(th);
-                });
-            }
-
-            data.results.forEach(row => {
-                const tr = document.createElement('tr');
-                Object.values(row).forEach(value => {
-                    const td = document.createElement('td');
-                    td.textContent = value;
-                    tr.appendChild(td);
-                });
-                resultsBody.appendChild(tr);
-            });
-        } else {
-            resultsText.textContent = `Error: ${data.message}`;
-        }
-    });
-</script>
-
-<div id="results">
-    <h3>Results</h3>
-    <p id="results-text">
-    <table>
-        <thead>
-            <tr id="results-header">
-            </tr>
-        </thead>
-        <tbody id="results-body">
-        </tbody>
-    </table>
-    </p>
-
-</div>
+</html>
