@@ -10,6 +10,7 @@ const upload = multer({ storage: storage });
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/query', require('./routes/query'));
 
 app.listen(port, function() {
   console.log(`Server is running on port ${port}`);
