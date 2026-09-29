@@ -10,6 +10,10 @@ router.post('/', async (req, res) => {
         }
 
         const tableName = req.body.tableName;
+        if (!tableName) {
+            return res.status(400).json({ success: false, message: 'Table name is required.' });
+        }
+
         const fetchSchema = async (db) => {
             const schema = db.prepare(`PRAGMA table_info("${tableName}")`).all();
             return schema;

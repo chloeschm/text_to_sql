@@ -13,6 +13,8 @@ app.use(express.json());
 
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/query', require('./routes/query'));
+app.use('/api/tables', require('./routes/tables'));
+
 app.listen(port, function() {
   console.log(`Server is running on port ${port}`);
 });

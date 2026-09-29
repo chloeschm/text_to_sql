@@ -4,3 +4,84 @@
     <button type="submit">Upload</button>
 </form>
 
+
+<select name="tableName" id="table-select">
+    <option value="">Select a table</option>
+</select>
+
+<script>
+    fetch('/api/tables')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('table-select');
+            data.tables.forEach(table => {
+                const option = document.createElement('option');
+                option.value = table;
+                option.textContent = table;
+                select.appendChild(option);
+            });
+        });
+</script>
+
+
+<form action="/api/query" method="post" id="query-form">
+    <input type="text" name="question" placeholder="Enter your question">
+    <button type="submit">Ask</button>
+</form>
+
+<script>
+    document.getElementById('query-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const tableName = document.getElementById('table-select').value;
+        const question = document.querySelector('input[name="question"]').value;
+        const response = await fetch('/api/query', {
+            method: 'POST',
+            body: JSON.stringify({ tableName, question }),
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+        const resultsText = document.getElementById('results-text');
+        const resultsHeader = document.getElementById('results-header');
+        const resultsBody = document.getElementById('results-body');
+        resultsHeader.innerHTML = '';
+        resultsBody.innerHTML = '';
+        if (data.success) {
+            if (data.results.length > 0) {
+                const firstRow = data.results[0];
+                Object.keys(firstRow).forEach(key => {
+                    const th = document.createElement('th');
+                    th.textContent = key;
+                    resultsHeader.appendChild(th);
+                });
+            }
+
+            data.results.forEach(row => {
+                const tr = document.createElement('tr');
+                Object.values(row).forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                resultsBody.appendChild(tr);
+            });
+        } else {
+            resultsText.textContent = `Error: ${data.message}`;
+        }
+    });
+</script>
+
+<div id="results">
+    <h3>Results</h3>
+    <p id="results-text">
+    <table>
+        <thead>
+            <tr id="results-header">
+            </tr>
+        </thead>
+        <tbody id="results-body">
+        </tbody>
+    </table>
+    </p>
+
+</div>
