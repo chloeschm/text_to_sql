@@ -5,19 +5,19 @@ const openai = new OpenAI({
 })
 
 
-async function getSQLFromOpenAI(schema, question) {
-    const schemaString = schema.map(col => `${col.name} (${col.type})`).join(', ');
+async function getSQLFromOpenAI(schemaString, question) {
     try {
         const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [
                 {
                     role: 'user',
-                    content: `You are an expert SQL parser. Someone who does not know SQL well, but needs to understand their database, 
-                    is giving you a database schema and asking a question in natural language. 
+                    content: `You are an expert SQL parser. Someone who does not know SQL well, but needs to understand their database,
+                    is giving you a database schema and asking a question in natural language.
                     You will generate the corresponding SQL query based on the schema and the question.
                     Make sure to use the correct table and column names as provided in the schema.
                     Make inferences when necessary, but do not make up any table or column names that are not in the schema.
+                    Always quote table and column names with double quotes to preserve exact names.
                     The schema is: ${schemaString}, and the question is: ${question}.
                     Return ONLY the SQL query.
                     `
@@ -29,6 +29,7 @@ async function getSQLFromOpenAI(schema, question) {
 
         let sqlQuery = response.choices[0].message.content.trim();
         sqlQuery = sqlQuery.replace(/```sql\n?|\n?```/g, '').trim();
+        sqlQuery = sqlQuery.replace(/FROM\s+([\w\s]+?)(?:;|$)/i, 'FROM "$1"');
         return sqlQuery;
     } catch (error) {
         console.error('Error generating SQL from OpenAI:', error);

@@ -8,24 +8,26 @@ router.post('/', async (req, res) => {
         if (!question) {
             return res.status(400).json({ success: false, message: 'Question is required.' });
         }
+
         const tableName = req.body.tableName;
         const fetchSchema = async (db) => {
-            const schema = db.prepare('PRAGMA table_info(?)').all(tableName);
+            const schema = db.prepare(`PRAGMA table_info("${tableName}")`).all();
             return schema;
         };
+
         const db = require('../db');
         const schema = await fetchSchema(db);
-        
-        const sqlQuery = await getSQLFromOpenAI(schema, question);
+        const schemaString = `Table: ${tableName}\nColumns: ${schema.map(col => `${col.name} (${col.type})`).join(', ')}`;
+
+        const sqlQuery = await getSQLFromOpenAI(schemaString, question);
         const results = db.prepare(sqlQuery).all();
+
         res.json({ success: true, results });
 
     } catch (error) {
-        console.error('Error executing SQL:', error);
+        console.error('Error executing query:', error);
         res.status(500).json({ success: false, message: 'Internal server error.' });
-        return;
     }
-
 });
 
 module.exports = router;
